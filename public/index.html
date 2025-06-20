@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Submitter</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"], input[type="password"], textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        #result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background-color: #e9ecef; }
+        .hidden { display: none; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Agent Task Submitter</h1>
+        <form id="taskForm">
+            <div>
+                <label for="geminiApiKey">Gemini API Key:</label>
+                <input type="password" id="geminiApiKey" name="geminiApiKey" required>
+            </div>
+            <div>
+                <label for="e2bApiKey">E2B API Key:</label>
+                <input type="password" id="e2bApiKey" name="e2bApiKey" required>
+            </div>
+            <div>
+                <label for="githubUrl">GitHub Repository URL (e.g., https://github.com/user/repo):</label>
+                <input type="text" id="githubUrl" name="githubUrl" required pattern="https?://github.com/.+/.+">
+            </div>
+            <div>
+                <label for="githubApiKey">GitHub API Key (PAT):</label>
+                <input type="password" id="githubApiKey" name="githubApiKey" required>
+            </div>
+            <div>
+                <label for="taskDescription">Task Description:</label>
+                <textarea id="taskDescription" name="taskDescription" required></textarea>
+            </div>
+            <button type="submit">Submit Task</button>
+        </form>
+        <div id="result" class="hidden">
+            <h2>Submission Status</h2>
+            <p id="statusMessage"></p>
+            <p>PR URL: <a id="prUrl" href="#" target="_blank"></a></p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('taskForm');
+        const resultDiv = document.getElementById('result');
+        const statusMessage = document.getElementById('statusMessage');
+        const prUrlLink = document.getElementById('prUrl');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            resultDiv.classList.remove('hidden');
+            statusMessage.textContent = 'Submitting... please wait.';
+            statusMessage.className = '';
+            prUrlLink.textContent = '';
+            prUrlLink.href = '#';
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/api/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.pr_url) {
+                    statusMessage.textContent = result.status || 'Done!';
+                    statusMessage.className = 'success';
+                    prUrlLink.textContent = result.pr_url;
+                    prUrlLink.href = result.pr_url;
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    statusMessage.textContent = 'Error: ' + (result.error || 'Unknown error occurred.');
+                    statusMessage.className = 'error';
+                    prUrlLink.textContent = 'N/A';
+                }
+            } catch (error) {
+                statusMessage.textContent = 'Network Error: ' + error.message;
+                statusMessage.className = 'error';
+                prUrlLink.textContent = 'N/A';
+            } finally {
+                resultDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
