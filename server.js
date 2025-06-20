@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { Session } = require('e2b'); // E2B SDK import
+const { Sandbox } = require('@e2b/code-interpreter'); // MODIFIED
 const fs = require('fs').promises; // For reading script file
 // const { exec } = require('child_process'); // Kept for potential future use
 
@@ -45,12 +45,15 @@ app.post('/api/submit', async (req, res) => {
         const e2bScript = await fs.readFile('e2b_script_content.sh', 'utf-8');
         console.log('E2B script content read successfully.');
 
-        console.log('Attempting to connect to E2B sandbox...');
-        session = await Session.create({
-            id: 'Nodejs', // Ensure this E2B environment ID is correct and has bash, git, gh, curl, jq.
-            apiKey: e2bApiKey,
+        console.log('Attempting to connect to E2B sandbox using @e2b/code-interpreter...');
+        // MODIFIED: Use Sandbox.create.
+        // Assuming apiKey can be passed in constructor.
+        // The 'id' parameter for specific environment is not used here, assuming default or other config method for Sandbox.
+        // CRITICAL ASSUMPTION: Default environment for @e2b/code-interpreter's Sandbox has git, gh, curl, jq.
+        session = await Sandbox.create({
+            apiKey: e2bApiKey
         });
-        console.log(`E2B session created successfully with ID: ${session.id}`);
+        console.log(`E2B Sandbox session created successfully.`); // Simplified log, ID might not be directly on session object
 
         const envVars = {
             GEMINI_API_KEY: geminiApiKey,
@@ -101,9 +104,9 @@ app.post('/api/submit', async (req, res) => {
         res.status(500).json({ error: `Operation failed: ${error.message}` });
     } finally {
         if (session) {
-            console.log('Closing E2B session...');
+            console.log('Closing E2B Sandbox session...');
             await session.close();
-            console.log('E2B session closed.');
+            console.log('E2B Sandbox session closed.');
         }
     }
 });

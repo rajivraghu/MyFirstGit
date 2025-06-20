@@ -21,6 +21,7 @@
   "dependencies": {
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
-    "e2b": "^1.6.0"
+    "@e2b/code-interpreter": "^1.5.1",
+    "dotenv": "^16.5.0"
   }
 }
