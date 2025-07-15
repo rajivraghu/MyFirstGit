@@ -1,0 +1,33 @@
+name: Comment When Label Is Gemma
+
+on:
+  issues:
+    types: [labeled]  # Trigger when a label is added
+
+jobs:
+  comment_on_gemma:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check label and comment
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const label = context.payload.label.name;
+          const issue_number = context.issue.number;
+
+          if (label.toLowerCase() !== "gemma") {
+            console.log(`Label '${label}' is not 'gemma'. Skipping comment.`);
+            return;
+          }
+
+          const comment_body = "🧠 Detected 'gemma' label – we’ll run the AI pipeline shortly.";
+
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number,
+            body: comment_body
+          });
+
+          console.log(`Comment posted to issue #${issue_number}`);
